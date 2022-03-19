@@ -49,6 +49,7 @@ const defaultConfig = {
         }),
         new MiniCssExtractPlugin({
             filename: '[name].min.css',
+            ignoreOrder: true,
         }),
         new WebpackShellPluginNext({
             onBuildStart: {
@@ -59,7 +60,7 @@ const defaultConfig = {
         }),
         new StatsWriterPlugin({
             fields: null,
-            stats: {chunkModules: true},
+            stats: {},
         }),
     ],
     watchOptions: {
@@ -75,12 +76,41 @@ const defaultConfig = {
 module.exports = [
     {
         ...defaultConfig,
-        entry: './src/index.ts',
+        entry: {
+            index: {
+                import: './src/index.ts',
+                dependsOn: ['common', 'vendor'],
+            },
+            news: {
+                import: './src/news/index.ts',
+                dependsOn: ['common', 'vendor'],
+            },
+            // shared: {
+            //     import: './src/shared/index.ts',
+            // },
+        },
         output: {
             path: path.resolve(__dirname, 'src/jsbuild'),
             publicPath: '/_/jsbuild/',
             filename: '[name].min.js',
             library: 'olz',
+        },
+        optimization: {
+            runtimeChunk: 'single',
+            splitChunks: {
+                cacheGroups: {
+                    common: {
+                        test: /[\\/]api[\\/]|[\\/]components[\\/]|[\\/]scripts[\\/]|[\\/]styles[\\/]/,
+                        name: 'common',
+                        chunks: 'all',
+                    },
+                    vendor: {
+                        test: /[\\/]node_modules[\\/]/,
+                        name: 'vendor',
+                        chunks: 'all',
+                    },
+                },
+            },
         },
     },
     {

@@ -27,10 +27,25 @@ function olz_header_without_routing($args = []): string {
     require_once __DIR__.'/../../../model/index.php';
     require_once __DIR__.'/../../schema/olz_organization_data/olz_organization_data.php';
 
-    $css_path = "{$_CONFIG->getCodePath()}jsbuild/main.min.css";
-    $js_path = "{$_CONFIG->getCodePath()}jsbuild/main.min.js";
-    $css_modified = is_file($css_path) ? filemtime($css_path) : 0;
-    $js_modified = is_file($js_path) ? filemtime($js_path) : 0;
+    $entry_points = $args['entry_points'] ?? ['index', 'common', 'vendor'];
+    $scripts = [];
+    $styles = [];
+    foreach ($entry_points as $entry_point) {
+        $css_path = "{$_CONFIG->getCodePath()}jsbuild/{$entry_point}.min.css";
+        if (is_file($css_path)) {
+            $css_modified = filemtime($css_path);
+            $css_href = "{$_CONFIG->getCodeHref()}jsbuild/{$entry_point}.min.css?modified={$css_modified}";
+            $styles[] = "<link rel='stylesheet' href='{$css_href}' />";
+        }
+        $js_path = "{$_CONFIG->getCodePath()}jsbuild/{$entry_point}.min.js";
+        if (is_file($js_path)) {
+            $js_modified = filemtime($js_path);
+            $js_href = "{$_CONFIG->getCodeHref()}jsbuild/{$entry_point}.min.js?modified={$js_modified}";
+            $scripts[] = "<script type='text/javascript' src='{$js_href}'></script>";
+        }
+    }
+    $load_scripts = implode("\n", $scripts);
+    $load_styles = implode("\n", $styles);
 
     if (!isset($refresh)) {
         $refresh = '';
@@ -51,6 +66,7 @@ function olz_header_without_routing($args = []): string {
 
     $additional_headers = implode("\n", $args['additional_headers'] ?? []);
 
+
     $out .= "<!DOCTYPE html>
     <html lang='de'>
     <head>
@@ -66,8 +82,8 @@ function olz_header_without_routing($args = []): string {
     <link rel='shortcut icon' href='{$_CONFIG->getCodeHref()}favicon.ico' />
     {$olz_organization_data}
     {$additional_headers}
-    <link rel='stylesheet' href='{$_CONFIG->getCodeHref()}jsbuild/main.min.css?modified={$css_modified}' />
-    <script type='text/javascript' src='{$_CONFIG->getCodeHref()}jsbuild/main.min.js?modified={$js_modified}' onload='olz.loaded()'></script>
+    {$load_scripts}
+    {$load_styles}
     </head>";
     $out .= "<body class='olz-override-root'>\n";
     $out .= "<a name='top'></a>";

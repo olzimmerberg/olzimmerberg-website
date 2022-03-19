@@ -44,6 +44,7 @@ echo olz_header([
     'additional_headers' => [
         $article_metadata,
     ],
+    'entry_points' => ['news', 'common', 'vendor'],
 ]);
 
 $button_name = 'button'.$db_table;

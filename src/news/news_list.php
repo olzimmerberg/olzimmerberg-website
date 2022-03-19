@@ -21,6 +21,7 @@ echo olz_header([
     'title' => "Aktuell",
     'description' => "Aktuelle Beiträge, Berichte von Anlässen und weitere Neuigkeiten von der OL Zimmerberg.",
     'norobots' => !$allow_robots,
+    'entry_points' => ['news', 'common', 'vendor'],
 ]);
 
 echo "<div id='content_rechts'>";

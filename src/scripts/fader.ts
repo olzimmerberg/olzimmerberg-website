@@ -111,3 +111,7 @@ function colorConv(color: string): RgbColor {
         parseInt(color.substring(2, 4), 16),
         parseInt(color.substring(4, 6), 16)];
 }
+
+/* @ts-expect-error: Ignore type unsafety. */
+// eslint-disable-next-line dot-notation
+window['colorFade'] = colorFade;
