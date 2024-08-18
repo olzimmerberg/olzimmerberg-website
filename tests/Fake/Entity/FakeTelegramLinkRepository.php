@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Olz\Tests\Fake\Entity;
 
 use Olz\Entity\TelegramLink;
+use Olz\Entity\User;
 use Olz\Tests\Fake\Entity\Common\FakeOlzRepository;
 
 /**
@@ -15,15 +16,19 @@ class FakeTelegramLinkRepository extends FakeOlzRepository {
     public string $fakeOlzEntityClass = FakeTelegramLink::class;
 
     public function findBy(array $criteria, ?array $orderBy = null, $limit = null, $offset = null): array {
-        if ($criteria == ['user' => 1]) {
+        $user = $criteria['user'];
+        if ($user instanceof User) {
+            $user = $user->getId();
+        }
+        if ($user === 1) {
             $redundant_pin_link = new TelegramLink();
             $redundant_pin_link->setId(13);
             return [$redundant_pin_link];
         }
-        if ($criteria == ['user' => 2]) {
+        if ($user === 2) {
             return [];
         }
-        if ($criteria == ['user' => 3]) {
+        if ($user === 3) {
             return [];
         }
         $query_json = json_encode($criteria);

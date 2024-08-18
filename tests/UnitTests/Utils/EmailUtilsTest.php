@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Olz\Tests\UnitTests\Utils;
 
 use Olz\Entity\User;
-use Olz\Exceptions\RecaptchaDeniedException;
 use Olz\Tests\Fake\Entity\FakeUser;
 use Olz\Tests\Fake\FakeEnvUtils;
 use Olz\Tests\Fake\FakeGeneralUtils;
@@ -62,7 +61,7 @@ final class EmailUtilsTest extends UnitTestCase {
             null,
         );
 
-        $email_utils->sendEmailVerificationEmail($user, 'valid-recaptcha');
+        $email_utils->sendEmailVerificationEmail($user);
 
         $this->assertSame([
             "INFO Email verification email sent to user (1).",
@@ -103,26 +102,6 @@ final class EmailUtilsTest extends UnitTestCase {
         }, $artifacts['email']));
     }
 
-    public function testSendEmailVerificationEmailInvalidRecaptcha(): void {
-        $user = FakeUser::defaultUser();
-        $email_utils = new DeterministicEmailUtils();
-
-        try {
-            $email_utils->sendEmailVerificationEmail($user, 'invalid-recaptcha');
-            $this->fail('Error expected');
-        } catch (RecaptchaDeniedException $exc) {
-            $this->assertSame([
-                "WARNING reCaptcha token was invalid",
-            ], $this->getLogs());
-            $this->assertSame(
-                'ReCaptcha Token ist ungültig',
-                $exc->getMessage()
-            );
-        } catch (\Throwable $th) {
-            $this->fail('RecaptchaDeniedException expected');
-        }
-    }
-
     public function testSendEmailVerificationEmailFailsSending(): void {
         $user = FakeUser::defaultUser();
         $mailer = $this->createMock(MailerInterface::class);
@@ -135,7 +114,7 @@ final class EmailUtilsTest extends UnitTestCase {
         ;
 
         try {
-            $email_utils->sendEmailVerificationEmail($user, 'valid-recaptcha');
+            $email_utils->sendEmailVerificationEmail($user);
             $this->fail('Error expected');
         } catch (\Exception $exc) {
             $this->assertSame([

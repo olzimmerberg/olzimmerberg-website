@@ -38,7 +38,11 @@ class VerifyUserEmailEndpoint extends OlzEndpoint {
         $token = $input['recaptchaToken'];
         $this->emailUtils()->setLogger($this->log());
         try {
-            $this->emailUtils()->sendEmailVerificationEmail($user, $token);
+            if (!$this->recaptchaUtils()->validateRecaptchaToken($token)) {
+                $this->log()->warning("reCaptcha token was invalid");
+                throw new RecaptchaDeniedException("ReCaptcha Token ist ungültig");
+            }
+            $this->emailUtils()->sendEmailVerificationEmail($user);
         } catch (RecaptchaDeniedException $exc) {
             $this->log()->notice("Recaptcha denied for user (ID:{$user->getId()})");
             return ['status' => 'DENIED'];

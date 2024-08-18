@@ -5,10 +5,12 @@ namespace Olz\Api\Endpoints;
 use Olz\Api\OlzEndpoint;
 use Olz\Entity\AuthRequest;
 use Olz\Entity\User;
-use Olz\Exceptions\RecaptchaDeniedException;
 use PhpTypeScriptApi\Fields\FieldTypes;
 use PhpTypeScriptApi\Fields\ValidationError;
 
+/**
+ * @deprecated Use CreateUserEndpoint instead
+ */
 class SignUpWithPasswordEndpoint extends OlzEndpoint {
     public static function getIdent(): string {
         return 'SignUpWithPasswordEndpoint';
@@ -155,12 +157,7 @@ class SignUpWithPasswordEndpoint extends OlzEndpoint {
 
             $this->emailUtils()->setLogger($this->log());
             try {
-                $this->emailUtils()->sendEmailVerificationEmail($user, $token);
-            } catch (RecaptchaDeniedException $exc) {
-                // @codeCoverageIgnoreStart
-                // Reason: Should not be reached.
-                throw new \Exception('This should never happen! Token was verified before!');
-                // @codeCoverageIgnoreEnd
+                $this->emailUtils()->sendEmailVerificationEmail($user);
             } catch (\Throwable $th) {
                 return ['status' => 'OK_NO_EMAIL_VERIFICATION'];
             }

@@ -31,7 +31,6 @@ trait RoleEndpointTrait {
                 ]),
                 // TODO permissions
                 'parentRole' => new FieldTypes\NumberField(['min_value' => 1, 'allow_null' => true]),
-                // TODO users
                 'indexWithinParent' => new FieldTypes\NumberField(['min_value' => 0, 'allow_null' => true]),
                 'featuredIndex' => new FieldTypes\NumberField(['allow_null' => true]),
                 'canHaveChildRoles' => new FieldTypes\BooleanField([]),

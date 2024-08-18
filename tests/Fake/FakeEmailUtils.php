@@ -26,14 +26,14 @@ class FakeEmailUtils extends EmailUtils {
         $this->client = new FakeImapClient();
     }
 
-    public function sendEmailVerificationEmail(User $user, string $token): void {
+    public function sendEmailVerificationEmail(User $user): void {
         if ($this->send_email_verification_email_error !== null) {
             if ($this->logger) {
                 $this->logger->error('Error sending fake verification email');
             }
             throw $this->send_email_verification_email_error;
         }
-        $this->email_verification_emails_sent[] = ['user' => $user, 'token' => $token];
+        $this->email_verification_emails_sent[] = ['user' => $user];
     }
 
     public function getImapClient(): Client {

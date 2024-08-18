@@ -7,7 +7,6 @@ use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
 use League\CommonMark\MarkdownConverter;
 use Olz\Entity\User;
-use Olz\Exceptions\RecaptchaDeniedException;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
@@ -19,12 +18,7 @@ use Webklex\PHPIMAP\ClientManager;
 class EmailUtils {
     use WithUtilsTrait;
 
-    public function sendEmailVerificationEmail(User $user, string $token): void {
-        if (!$this->recaptchaUtils()->validateRecaptchaToken($token)) {
-            $this->log()->warning("reCaptcha token was invalid");
-            throw new RecaptchaDeniedException("ReCaptcha Token ist ungültig");
-        }
-
+    public function sendEmailVerificationEmail(User $user): void {
         $user_id = $user->getId();
         $email_verification_token = $this->getRandomEmailVerificationToken();
         $user->setEmailVerificationToken($email_verification_token);

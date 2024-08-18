@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Olz\Tests\UnitTests\Api\Endpoints;
+namespace Olz\Tests\UnitTests\Users\Endpoints;
 
-use Olz\Api\Endpoints\DeleteUserEndpoint;
 use Olz\Entity\AccessToken;
 use Olz\Entity\News\NewsEntry;
 use Olz\Entity\NotificationSubscription;
@@ -13,8 +12,10 @@ use Olz\Entity\TelegramLink;
 use Olz\Tests\Fake\Entity\Common\FakeOlzRepository;
 use Olz\Tests\Fake\Entity\FakeUser;
 use Olz\Tests\UnitTests\Common\UnitTestCase;
+use Olz\Users\Endpoints\DeleteUserEndpoint;
 use Olz\Utils\MemorySession;
 use Olz\Utils\WithUtilsCache;
+use PhpTypeScriptApi\HttpError;
 
 /**
  * @extends FakeOlzRepository<NewsEntry>
@@ -97,7 +98,7 @@ class DeleteUserEndpointForTest extends DeleteUserEndpoint {
 /**
  * @internal
  *
- * @covers \Olz\Api\Endpoints\DeleteUserEndpoint
+ * @covers \Olz\Users\Endpoints\DeleteUserEndpoint
  */
 final class DeleteUserEndpointTest extends UnitTestCase {
     public function testDeleteUserEndpointIdent(): void {
@@ -106,7 +107,9 @@ final class DeleteUserEndpointTest extends UnitTestCase {
     }
 
     public function testDeleteUserEndpointWrongUsername(): void {
-        $endpoint = new DeleteUserEndpoint();
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = false;
+        $endpoint = new DeleteUserEndpointForTest();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $session->session_storage = [
@@ -116,21 +119,78 @@ final class DeleteUserEndpointTest extends UnitTestCase {
         ];
         $endpoint->setSession($session);
 
-        $result = $endpoint->call(['id' => 1]);
+        try {
+            $endpoint->call(['id' => 1]);
+            $this->fail('Exception expected.');
+        } catch (HttpError $httperr) {
+            $this->assertSame([
+                "INFO Valid user request",
+                "WARNING HTTP error 403",
+            ], $this->getLogs());
+            $this->assertSame('Kein Zugriff!', $httperr->getMessage());
+            $this->assertSame([
+                'auth' => 'ftp',
+                'root' => 'karten',
+                'user' => 'wrong_user',
+            ], $session->session_storage);
+            $this->assertSame([], $endpoint->unlink_calls);
+            $this->assertSame([], $endpoint->rename_calls);
+        }
+    }
 
-        $this->assertSame([
-            'INFO Valid user request',
-            'INFO Valid user response',
-        ], $this->getLogs());
-        $this->assertSame(['status' => 'ERROR'], $result);
-        $this->assertSame([
-            'auth' => 'ftp',
-            'root' => 'karten',
-            'user' => 'wrong_user',
-        ], $session->session_storage);
+    public function testDeleteUserEndpointNoAccess(): void {
+        WithUtilsCache::get('authUtils')->has_permission_by_query = ['users' => false];
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = false;
+        $endpoint = new DeleteUserEndpoint();
+        $endpoint->runtimeSetup();
+
+        try {
+            $endpoint->call([
+                'id' => FakeUser::vorstandUser()->getId(),
+            ]);
+            $this->fail('Error expected');
+        } catch (HttpError $err) {
+            $this->assertSame([
+                "INFO Valid user request",
+                "WARNING HTTP error 403",
+            ], $this->getLogs());
+            $this->assertSame([
+                [FakeUser::vorstandUser(), 'vorstand', 'vorstand', null, null, 'users'],
+            ], WithUtilsCache::get('entityUtils')->can_update_olz_entity_calls);
+            $this->assertSame(403, $err->getCode());
+        }
+    }
+
+    public function testDeleteUserEndpointInexistent(): void {
+        WithUtilsCache::get('authUtils')->has_permission_by_query = ['users' => true];
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
+        $endpoint = new DeleteUserEndpoint();
+        $endpoint->runtimeSetup();
+
+        try {
+            $endpoint->call([
+                'id' => FakeOlzRepository::NULL_ID,
+            ]);
+            $this->fail('Error expected');
+        } catch (HttpError $err) {
+            $this->assertSame([
+                "INFO Valid user request",
+                "WARNING HTTP error 404",
+            ], $this->getLogs());
+            $this->assertSame(
+                [],
+                WithUtilsCache::get('entityUtils')->can_update_olz_entity_calls,
+            );
+            $this->assertSame(404, $err->getCode());
+            $entity_manager = WithUtilsCache::get('entityManager');
+            $this->assertCount(0, $entity_manager->removed);
+            $this->assertCount(0, $entity_manager->flushed_removed);
+        }
     }
 
     public function testDeleteUserEndpointCannotDelete(): void {
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         $entity_manager = WithUtilsCache::get('entityManager');
         $news_repo = new FakeDeleteUserEndpointNewsEntryRepository($entity_manager);
         $news_repo->has_news = true;
@@ -149,34 +209,34 @@ final class DeleteUserEndpointTest extends UnitTestCase {
             'user' => 'admin',
         ];
         $endpoint->setSession($session);
+        $default_user = FakeUser::defaultUser();
 
-        $result = $endpoint->call(['id' => 2]);
+        $result = $endpoint->call(['id' => $default_user->getId()]); // another user
 
         $this->assertSame([
             'INFO Valid user request',
             'INFO Valid user response',
         ], $this->getLogs());
         $this->assertSame(['status' => 'OK'], $result);
-        $admin_user = FakeUser::adminUser();
-        $this->assertSame(2, $admin_user->getId());
-        $this->assertSame('Admin', $admin_user->getFirstName());
-        $this->assertSame('Istrator', $admin_user->getLastName());
-        $this->assertSame('admin', $admin_user->getUsername());
-        $this->assertSame('', $admin_user->getEmail());
-        $this->assertSame('', $admin_user->getPasswordHash());
-        $this->assertSame('', $admin_user->getPhone());
-        $this->assertNull($admin_user->getGender());
-        $this->assertNull($admin_user->getBirthdate());
-        $this->assertNull($admin_user->getStreet());
-        $this->assertNull($admin_user->getPostalCode());
-        $this->assertNull($admin_user->getCity());
-        $this->assertNull($admin_user->getRegion());
-        $this->assertNull($admin_user->getCountryCode());
-        $this->assertSame('', $admin_user->getPermissions());
-        $this->assertNull($admin_user->getRoot());
+        $this->assertSame(1, $default_user->getId());
+        $this->assertSame('Default', $default_user->getFirstName());
+        $this->assertSame('User', $default_user->getLastName());
+        $this->assertSame('default', $default_user->getUsername());
+        $this->assertSame('', $default_user->getEmail());
+        $this->assertSame('', $default_user->getPasswordHash());
+        $this->assertSame('', $default_user->getPhone());
+        $this->assertNull($default_user->getGender());
+        $this->assertNull($default_user->getBirthdate());
+        $this->assertNull($default_user->getStreet());
+        $this->assertNull($default_user->getPostalCode());
+        $this->assertNull($default_user->getCity());
+        $this->assertNull($default_user->getRegion());
+        $this->assertNull($default_user->getCountryCode());
+        $this->assertSame('', $default_user->getPermissions());
+        $this->assertNull($default_user->getRoot());
         $this->assertSame(
             '2020-03-13 19:30:00',
-            $admin_user->getLastModifiedAt()->format('Y-m-d H:i:s')
+            $default_user->getLastModifiedAt()->format('Y-m-d H:i:s')
         );
         $this->assertCount(5, $entity_manager->removed);
         $this->assertTrue($entity_manager->removed[0] instanceof NewsEntry);
@@ -185,17 +245,25 @@ final class DeleteUserEndpointTest extends UnitTestCase {
         $this->assertTrue($entity_manager->removed[3] instanceof StravaLink);
         $this->assertTrue($entity_manager->removed[4] instanceof AccessToken);
         $this->assertSame($entity_manager->removed, $entity_manager->flushed_removed);
-        $this->assertSame([], $session->session_storage);
+        // We deleted **another** user, so the session should still be intact!
         $this->assertSame([
-            'fake-data-path/img/users/2.jpg',
+            'auth' => 'ftp',
+            'root' => 'karten',
+            'user' => 'admin',
+        ], $session->session_storage);
+        $this->assertSame([
+            'fake-data-path/img/users/1.jpg',
         ], $endpoint->is_file_calls);
         $this->assertSame([
-            'fake-data-path/img/users/2.jpg',
+            'fake-data-path/img/users/1.jpg',
         ], $endpoint->unlink_calls);
         $this->assertSame([], $endpoint->rename_calls);
     }
 
     public function testDeleteUserEndpointCanDelete(): void {
+        $default_user = FakeUser::defaultUser();
+        WithUtilsCache::get('authUtils')->current_user = $default_user;
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         $entity_manager = WithUtilsCache::get('entityManager');
         $news_repo = new FakeDeleteUserEndpointNewsEntryRepository($entity_manager);
         $news_repo->has_news = false;
@@ -215,23 +283,22 @@ final class DeleteUserEndpointTest extends UnitTestCase {
         ];
         $endpoint->setSession($session);
 
-        $result = $endpoint->call(['id' => 1]);
+        $result = $endpoint->call(['id' => $default_user->getId()]);
 
         $this->assertSame([
             'INFO Valid user request',
-            'WARNING Removing user default (User ID: 1).',
+            // 'WARNING Removing user default (User ID: 1).',
             'INFO Valid user response',
         ], $this->getLogs());
         $this->assertSame(['status' => 'OK'], $result);
-        $default_user = FakeUser::defaultUser();
-        $this->assertCount(6, $entity_manager->removed);
+        $this->assertSame($entity_manager->removed, $entity_manager->flushed_removed);
+        $this->assertCount(5, $entity_manager->removed);
         $this->assertTrue($entity_manager->removed[0] instanceof NewsEntry);
         $this->assertTrue($entity_manager->removed[1] instanceof NotificationSubscription);
         $this->assertTrue($entity_manager->removed[2] instanceof TelegramLink);
         $this->assertTrue($entity_manager->removed[3] instanceof StravaLink);
         $this->assertTrue($entity_manager->removed[4] instanceof AccessToken);
-        $this->assertSame($default_user, $entity_manager->removed[5]);
-        $this->assertSame($entity_manager->removed, $entity_manager->flushed_removed);
+        $this->assertSame(0, $default_user->getOnOff());
         $this->assertSame([], $session->session_storage);
         $this->assertSame([
             'fake-data-path/img/users/1.jpg',

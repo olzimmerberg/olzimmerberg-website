@@ -18,13 +18,11 @@ class OlzApi extends Api {
         Endpoints\LogoutEndpoint $logoutEndpoint,
         Endpoints\GetAuthenticatedUserEndpoint $getAuthenticatedUserEndpoint,
         Endpoints\GetAuthenticatedRolesEndpoint $getAuthenticatedRolesEndpoint,
-        Endpoints\UpdateUserEndpoint $updateUserEndpoint,
         Endpoints\VerifyUserEmailEndpoint $verifyUserEmailEndpoint,
         Endpoints\UpdateUserPasswordEndpoint $updateUserPasswordEndpoint,
         Endpoints\SignUpWithPasswordEndpoint $signUpWithPasswordEndpoint,
         Endpoints\LoginWithStravaEndpoint $loginWithStravaEndpoint,
         Endpoints\SignUpWithStravaEndpoint $signUpWithStravaEndpoint,
-        Endpoints\DeleteUserEndpoint $deleteUserEndpoint,
         Endpoints\ExecuteEmailReactionEndpoint $executeEmailReactionEndpoint,
         Endpoints\LinkTelegramEndpoint $linkTelegramEndpoint,
         Endpoints\OnTelegramEndpoint $onTelegramEndpoint,
@@ -88,6 +86,11 @@ class OlzApi extends Api {
         \Olz\Termine\Endpoints\EditTerminTemplateEndpoint $editTerminTemplateEndpoint,
         \Olz\Termine\Endpoints\UpdateTerminTemplateEndpoint $updateTerminTemplateEndpoint,
         \Olz\Termine\Endpoints\DeleteTerminTemplateEndpoint $deleteTerminTemplateEndpoint,
+        \Olz\Users\Endpoints\CreateUserEndpoint $createUserEndpoint,
+        \Olz\Users\Endpoints\GetUserEndpoint $getUserEndpoint,
+        \Olz\Users\Endpoints\EditUserEndpoint $editUserEndpoint,
+        \Olz\Users\Endpoints\UpdateUserEndpoint $updateUserEndpoint,
+        \Olz\Users\Endpoints\DeleteUserEndpoint $deleteUserEndpoint,
     ) {
         $this->registerEndpoint('onDaily', $onDailyEndpoint);
         $this->registerEndpoint('onContinuously', $onContinuouslyEndpoint);
@@ -97,13 +100,11 @@ class OlzApi extends Api {
         $this->registerEndpoint('logout', $logoutEndpoint);
         $this->registerEndpoint('getAuthenticatedUser', $getAuthenticatedUserEndpoint);
         $this->registerEndpoint('getAuthenticatedRoles', $getAuthenticatedRolesEndpoint);
-        $this->registerEndpoint('updateUser', $updateUserEndpoint);
         $this->registerEndpoint('verifyUserEmail', $verifyUserEmailEndpoint);
         $this->registerEndpoint('updatePassword', $updateUserPasswordEndpoint);
         $this->registerEndpoint('signUpWithPassword', $signUpWithPasswordEndpoint);
         $this->registerEndpoint('loginWithStrava', $loginWithStravaEndpoint);
         $this->registerEndpoint('signUpWithStrava', $signUpWithStravaEndpoint);
-        $this->registerEndpoint('deleteUser', $deleteUserEndpoint);
         $this->registerEndpoint('executeEmailReaction', $executeEmailReactionEndpoint);
         $this->registerEndpoint('linkTelegram', $linkTelegramEndpoint);
         $this->registerEndpoint('onTelegram', $onTelegramEndpoint);
@@ -202,6 +203,14 @@ class OlzApi extends Api {
         $this->registerEndpoint('updateTerminTemplate', $updateTerminTemplateEndpoint);
         $this->registerEndpoint('deleteTerminTemplate', $deleteTerminTemplateEndpoint);
 
+        // Users
+
+        $this->registerEndpoint('createUser', $createUserEndpoint);
+        $this->registerEndpoint('getUser', $getUserEndpoint);
+        $this->registerEndpoint('editUser', $editUserEndpoint);
+        $this->registerEndpoint('updateUser', $updateUserEndpoint);
+        $this->registerEndpoint('deleteUser', $deleteUserEndpoint);
+
         OlzApps::registerAllEndpoints($this);
     }
 
@@ -226,13 +235,11 @@ class OlzApi extends Api {
             new Endpoints\LogoutEndpoint(),
             new Endpoints\GetAuthenticatedUserEndpoint(),
             new Endpoints\GetAuthenticatedRolesEndpoint(),
-            new Endpoints\UpdateUserEndpoint(),
             new Endpoints\VerifyUserEmailEndpoint(),
             new Endpoints\UpdateUserPasswordEndpoint(),
             new Endpoints\SignUpWithPasswordEndpoint(),
             new Endpoints\LoginWithStravaEndpoint(),
             new Endpoints\SignUpWithStravaEndpoint(),
-            new Endpoints\DeleteUserEndpoint(),
             new Endpoints\ExecuteEmailReactionEndpoint(),
             new Endpoints\LinkTelegramEndpoint(),
             new Endpoints\OnTelegramEndpoint(),
@@ -296,6 +303,11 @@ class OlzApi extends Api {
             new \Olz\Termine\Endpoints\EditTerminTemplateEndpoint(),
             new \Olz\Termine\Endpoints\UpdateTerminTemplateEndpoint(),
             new \Olz\Termine\Endpoints\DeleteTerminTemplateEndpoint(),
+            new \Olz\Users\Endpoints\CreateUserEndpoint(),
+            new \Olz\Users\Endpoints\GetUserEndpoint(),
+            new \Olz\Users\Endpoints\EditUserEndpoint(),
+            new \Olz\Users\Endpoints\UpdateUserEndpoint(),
+            new \Olz\Users\Endpoints\DeleteUserEndpoint(),
         );
     }
 }

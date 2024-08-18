@@ -37,7 +37,9 @@ final class VerifyUserEmailEndpointTest extends UnitTestCase {
             "INFO Valid user response",
         ], $this->getLogs());
         $this->assertSame(['status' => 'OK'], $result);
-        $this->assertSame([['user' => $user, 'token' => 'fake-recaptcha-token']], WithUtilsCache::get('emailUtils')->email_verification_emails_sent);
+        $this->assertSame([
+            ['user' => $user],
+        ], WithUtilsCache::get('emailUtils')->email_verification_emails_sent);
     }
 
     public function testVerifyUserEmailEndpointWithoutInput(): void {
@@ -93,7 +95,6 @@ final class VerifyUserEmailEndpointTest extends UnitTestCase {
     public function testVerifyUserEmailEndpointInvalidRecaptchaToken(): void {
         WithUtilsCache::get('authUtils')->current_user = FakeUser::defaultUser();
         WithUtilsCache::get('emailUtils')->send_email_verification_email_error = new RecaptchaDeniedException('test');
-        $entity_manager = WithUtilsCache::get('entityManager');
         $endpoint = new VerifyUserEmailEndpoint();
         $endpoint->runtimeSetup();
 
@@ -103,7 +104,7 @@ final class VerifyUserEmailEndpointTest extends UnitTestCase {
 
         $this->assertSame([
             "INFO Valid user request",
-            "ERROR Error sending fake verification email",
+            "WARNING reCaptcha token was invalid",
             "NOTICE Recaptcha denied for user (ID:1)",
             "INFO Valid user response",
         ], $this->getLogs());
@@ -114,7 +115,6 @@ final class VerifyUserEmailEndpointTest extends UnitTestCase {
     public function testVerifyUserEmailEndpointErrorSending(): void {
         WithUtilsCache::get('authUtils')->current_user = FakeUser::defaultUser();
         WithUtilsCache::get('emailUtils')->send_email_verification_email_error = new \Exception('test');
-        $entity_manager = WithUtilsCache::get('entityManager');
         $endpoint = new VerifyUserEmailEndpoint();
         $endpoint->runtimeSetup();
 

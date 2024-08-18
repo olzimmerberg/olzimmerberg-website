@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Olz\Tests\UnitTests\Api\Endpoints;
+namespace Olz\Tests\UnitTests\Users\Endpoints;
 
-use Olz\Api\Endpoints\UpdateUserEndpoint;
 use Olz\Entity\User;
+use Olz\Tests\Fake\Entity\Common\FakeOlzRepository;
 use Olz\Tests\Fake\Entity\FakeUser;
+use Olz\Tests\Fake\FakeRecaptchaUtils;
 use Olz\Tests\UnitTests\Common\UnitTestCase;
+use Olz\Users\Endpoints\UpdateUserEndpoint;
 use Olz\Utils\MemorySession;
 use Olz\Utils\WithUtilsCache;
 use PhpTypeScriptApi\HttpError;
@@ -35,46 +37,60 @@ class UpdateUserEndpointForTest extends UpdateUserEndpoint {
 /**
  * @internal
  *
- * @covers \Olz\Api\Endpoints\UpdateUserEndpoint
+ * @covers \Olz\Users\Endpoints\UpdateUserEndpoint
  */
 final class UpdateUserEndpointTest extends UnitTestCase {
     public const MINIMAL_INPUT = [
         'id' => 2,
-        'firstName' => 'First',
-        'lastName' => 'Last',
-        'username' => 'test',
-        'email' => 'bot@staging.olzimmerberg.ch',
-        'phone' => null,
-        'gender' => null,
-        'birthdate' => null,
-        'street' => null,
-        'postalCode' => null,
-        'city' => null,
-        'region' => null,
-        'countryCode' => null,
-        'siCardNumber' => null,
-        'solvNumber' => null,
-        'avatarId' => null,
-        'recaptchaToken' => null,
+        'meta' => [
+            'ownerUserId' => 1,
+            'ownerRoleId' => 1,
+            'onOff' => true,
+        ],
+        'data' => [
+            'firstName' => 'First',
+            'lastName' => 'Last',
+            'username' => 'test',
+            'email' => 'bot@staging.olzimmerberg.ch',
+            'password' => null,
+            'phone' => null,
+            'gender' => null,
+            'birthdate' => null,
+            'street' => null,
+            'postalCode' => null,
+            'city' => null,
+            'region' => null,
+            'countryCode' => null,
+            'siCardNumber' => null,
+            'solvNumber' => null,
+            'avatarId' => null,
+        ],
     ];
     public const MAXIMAL_INPUT = [
         'id' => 2,
-        'firstName' => 'First',
-        'lastName' => 'Last',
-        'username' => 'test',
-        'email' => 'bot@staging.olzimmerberg.ch',
-        'phone' => '+41441234567',
-        'gender' => 'F',
-        'birthdate' => '1992-08-05',
-        'street' => 'Teststrasse 123',
-        'postalCode' => '1234',
-        'city' => 'Muster',
-        'region' => 'ZH',
-        'countryCode' => 'CH',
-        'siCardNumber' => 1234567,
-        'solvNumber' => 'JACK7NORRIS',
-        'avatarId' => 'fake-avatar-id.jpg',
-        'recaptchaToken' => 'valid-recaptcha-token',
+        'meta' => [
+            'ownerUserId' => 1,
+            'ownerRoleId' => 1,
+            'onOff' => true,
+        ],
+        'data' => [
+            'firstName' => 'First',
+            'lastName' => 'Last',
+            'username' => 'test',
+            'email' => 'bot@staging.olzimmerberg.ch',
+            'password' => null,
+            'phone' => '+41441234567',
+            'gender' => 'F',
+            'birthdate' => '1992-08-05',
+            'street' => 'Teststrasse 123',
+            'postalCode' => '1234',
+            'city' => 'Muster',
+            'region' => 'ZH',
+            'countryCode' => 'CH',
+            'siCardNumber' => 1234567,
+            'solvNumber' => 'JACK7NORRIS',
+            'avatarId' => 'fake-avatar-id.jpg',
+        ],
     ];
 
     public function testUpdateUserEndpointIdent(): void {
@@ -83,6 +99,8 @@ final class UpdateUserEndpointTest extends UnitTestCase {
     }
 
     public function testUpdateUserEndpointWrongUsername(): void {
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::defaultUser();
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = false;
         $endpoint = new UpdateUserEndpointForTest();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
@@ -93,23 +111,28 @@ final class UpdateUserEndpointTest extends UnitTestCase {
         ];
         $endpoint->setSession($session);
 
-        $result = $endpoint->call(self::MINIMAL_INPUT);
-
-        $this->assertSame([
-            "INFO Valid user request",
-            "INFO Valid user response",
-        ], $this->getLogs());
-        $this->assertSame(['status' => 'ERROR'], $result);
-        $this->assertSame([
-            'auth' => 'ftp',
-            'root' => 'karten',
-            'user' => 'wrong_user',
-        ], $session->session_storage);
-        $this->assertSame([], $endpoint->unlink_calls);
-        $this->assertSame([], $endpoint->rename_calls);
+        try {
+            $endpoint->call(self::MINIMAL_INPUT);
+            $this->fail('Exception expected.');
+        } catch (HttpError $httperr) {
+            $this->assertSame([
+                "INFO Valid user request",
+                "WARNING HTTP error 403",
+            ], $this->getLogs());
+            $this->assertSame('Kein Zugriff!', $httperr->getMessage());
+            $this->assertSame([
+                'auth' => 'ftp',
+                'root' => 'karten',
+                'user' => 'wrong_user',
+            ], $session->session_storage);
+            $this->assertSame([], $endpoint->unlink_calls);
+            $this->assertSame([], $endpoint->rename_calls);
+        }
     }
 
     public function testUpdateUserEndpointInvalidNewUsername(): void {
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         $endpoint = new UpdateUserEndpointForTest();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
@@ -121,10 +144,13 @@ final class UpdateUserEndpointTest extends UnitTestCase {
         $endpoint->setSession($session);
 
         try {
-            $endpoint->call(array_merge(
-                self::MINIMAL_INPUT,
-                ['username' => 'invalid@']
-            ));
+            $endpoint->call([
+                ...self::MINIMAL_INPUT,
+                'data' => [
+                    ...self::MINIMAL_INPUT['data'],
+                    'username' => 'invalid@',
+                ],
+            ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
             $this->assertSame([
@@ -147,6 +173,8 @@ final class UpdateUserEndpointTest extends UnitTestCase {
     }
 
     public function testUpdateUserEndpointWithNewOlzimmerbergEmail(): void {
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         $endpoint = new UpdateUserEndpointForTest();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
@@ -158,10 +186,13 @@ final class UpdateUserEndpointTest extends UnitTestCase {
         $endpoint->setSession($session);
 
         try {
-            $endpoint->call(array_merge(
-                self::MINIMAL_INPUT,
-                ['email' => 'bot@olzimmerberg.ch']
-            ));
+            $endpoint->call([
+                ...self::MINIMAL_INPUT,
+                'data' => [
+                    ...self::MINIMAL_INPUT['data'],
+                    'email' => 'bot@olzimmerberg.ch',
+                ],
+            ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
             $this->assertSame([
@@ -184,6 +215,8 @@ final class UpdateUserEndpointTest extends UnitTestCase {
     }
 
     public function testUpdateUserEndpointMinimal(): void {
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         WithUtilsCache::get('envUtils')->fake_data_path = 'fake-data-path/';
         $endpoint = new UpdateUserEndpointForTest();
         $endpoint->runtimeSetup();
@@ -194,17 +227,19 @@ final class UpdateUserEndpointTest extends UnitTestCase {
             'user' => 'admin',
         ];
         $endpoint->setSession($session);
+        $endpoint->setRecaptchaUtils(new FakeRecaptchaUtils());
 
         $result = $endpoint->call([
             ...self::MINIMAL_INPUT,
-            'recaptchaToken' => 'valid-recaptcha-token',
         ]);
 
         $this->assertSame([
             "INFO Valid user request",
+            "NOTICE OLD:",
+            "NOTICE NEW:",
             "INFO Valid user response",
         ], $this->getLogs());
-        $this->assertSame(['status' => 'OK'], $result);
+        $this->assertSame(['status' => 'OK', 'id' => 2], $result);
         $admin_user = FakeUser::adminUser();
         $this->assertSame(2, $admin_user->getId());
         $this->assertSame('test', $admin_user->getUsername());
@@ -236,6 +271,8 @@ final class UpdateUserEndpointTest extends UnitTestCase {
     }
 
     public function testUpdateUserEndpointMaximal(): void {
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         WithUtilsCache::get('envUtils')->fake_data_path = 'fake-data-path/';
         $endpoint = new UpdateUserEndpointForTest();
         $endpoint->runtimeSetup();
@@ -246,14 +283,17 @@ final class UpdateUserEndpointTest extends UnitTestCase {
             'user' => 'admin',
         ];
         $endpoint->setSession($session);
+        $endpoint->setRecaptchaUtils(new FakeRecaptchaUtils());
 
         $result = $endpoint->call(self::MAXIMAL_INPUT);
 
         $this->assertSame([
             "INFO Valid user request",
+            "NOTICE OLD:",
+            "NOTICE NEW:",
             "INFO Valid user response",
         ], $this->getLogs());
-        $this->assertSame(['status' => 'OK'], $result);
+        $this->assertSame(['status' => 'OK', 'id' => 2], $result);
         $admin_user = FakeUser::adminUser();
         $this->assertSame(2, $admin_user->getId());
         $this->assertSame('test', $admin_user->getUsername());
@@ -290,6 +330,8 @@ final class UpdateUserEndpointTest extends UnitTestCase {
     }
 
     public function testUpdateUserEndpointSameEmail(): void {
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         WithUtilsCache::get('envUtils')->fake_data_path = 'fake-data-path/';
         $endpoint = new UpdateUserEndpointForTest();
         $endpoint->runtimeSetup();
@@ -303,14 +345,19 @@ final class UpdateUserEndpointTest extends UnitTestCase {
 
         $result = $endpoint->call([
             ...self::MINIMAL_INPUT,
-            'email' => 'admin-user@staging.olzimmerberg.ch',
+            'data' => [
+                ...self::MINIMAL_INPUT['data'],
+                'email' => 'admin-user@staging.olzimmerberg.ch',
+            ],
         ]);
 
         $this->assertSame([
             "INFO Valid user request",
+            "NOTICE OLD:",
+            "NOTICE NEW:",
             "INFO Valid user response",
         ], $this->getLogs());
-        $this->assertSame(['status' => 'OK'], $result);
+        $this->assertSame(['status' => 'OK', 'id' => 2], $result);
         $admin_user = FakeUser::adminUser();
         $this->assertSame(2, $admin_user->getId());
         $this->assertSame('test', $admin_user->getUsername());
@@ -341,73 +388,9 @@ final class UpdateUserEndpointTest extends UnitTestCase {
         $this->assertSame([], $endpoint->rename_calls);
     }
 
-    public function testUpdateUserEndpointEmailUpdateWithoutRecaptcha(): void {
-        WithUtilsCache::get('envUtils')->fake_data_path = 'fake-data-path/';
-        $endpoint = new UpdateUserEndpointForTest();
-        $endpoint->runtimeSetup();
-        $session = new MemorySession();
-        $session->session_storage = [
-            'auth' => 'ftp',
-            'root' => 'karten',
-            'user' => 'admin',
-        ];
-        $endpoint->setSession($session);
-
-        try {
-            $endpoint->call(self::MINIMAL_INPUT);
-            $this->fail('Exception expected.');
-        } catch (HttpError $httperr) {
-            $this->assertSame([
-                "INFO Valid user request",
-                "WARNING Bad user request",
-            ], $this->getLogs());
-            $this->assertSame('Fehlerhafte Eingabe', $httperr->getMessage());
-            $this->assertSame([
-                'recaptchaToken' => ['Bei einer E-Mail-Änderung muss ein ReCaptcha Token angegeben werden.'],
-                // @phpstan-ignore-next-line
-            ], $httperr->getPrevious()->getValidationErrors());
-            $this->assertSame([
-                'auth' => 'ftp',
-                'root' => 'karten',
-                'user' => 'admin',
-            ], $session->session_storage);
-            $this->assertSame([], $endpoint->unlink_calls);
-            $this->assertSame([], $endpoint->rename_calls);
-        }
-    }
-
-    public function testUpdateUserEndpointWithInvalidRecaptcha(): void {
-        WithUtilsCache::get('envUtils')->fake_data_path = 'fake-data-path/';
-        $endpoint = new UpdateUserEndpointForTest();
-        $endpoint->runtimeSetup();
-        $session = new MemorySession();
-        $session->session_storage = [
-            'auth' => 'ftp',
-            'root' => 'karten',
-            'user' => 'admin',
-        ];
-        $endpoint->setSession($session);
-
-        $result = $endpoint->call([
-            ...self::MINIMAL_INPUT,
-            'recaptchaToken' => 'invalid-token',
-        ]);
-
-        $this->assertSame([
-            "INFO Valid user request",
-            "INFO Valid user response",
-        ], $this->getLogs());
-        $this->assertSame(['status' => 'DENIED'], $result);
-        $this->assertSame([
-            'auth' => 'ftp',
-            'root' => 'karten',
-            'user' => 'admin',
-        ], $session->session_storage);
-        $this->assertSame([], $endpoint->unlink_calls);
-        $this->assertSame([], $endpoint->rename_calls);
-    }
-
     public function testUpdateUserEndpointWithExistingUsername(): void {
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         $entity_manager = WithUtilsCache::get('entityManager');
         $existing_user = new User();
         $existing_user->setId(123);
@@ -431,17 +414,17 @@ final class UpdateUserEndpointTest extends UnitTestCase {
             'user' => 'admin',
         ];
         $endpoint->setSession($session);
+        $endpoint->setRecaptchaUtils(new FakeRecaptchaUtils());
 
         try {
             $endpoint->call([
                 ...self::MINIMAL_INPUT,
-                'recaptchaToken' => 'valid-recaptcha-token',
             ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
             $this->assertSame([
-                "INFO Valid user request",
-                "WARNING Bad user request",
+                'INFO Valid user request',
+                'WARNING Bad user request',
             ], $this->getLogs());
             $this->assertSame('Fehlerhafte Eingabe', $httperr->getMessage());
             $this->assertSame([
@@ -459,6 +442,8 @@ final class UpdateUserEndpointTest extends UnitTestCase {
     }
 
     public function testUpdateUserEndpointWithExistingEmail(): void {
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         $entity_manager = WithUtilsCache::get('entityManager');
         $existing_user = new User();
         $existing_user->setId(123);
@@ -482,17 +467,17 @@ final class UpdateUserEndpointTest extends UnitTestCase {
             'user' => 'admin',
         ];
         $endpoint->setSession($session);
+        $endpoint->setRecaptchaUtils(new FakeRecaptchaUtils());
 
         try {
             $endpoint->call([
                 ...self::MINIMAL_INPUT,
-                'recaptchaToken' => 'valid-recaptcha-token',
             ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
             $this->assertSame([
-                "INFO Valid user request",
-                "WARNING Bad user request",
+                'INFO Valid user request',
+                'WARNING Bad user request',
             ], $this->getLogs());
             $this->assertSame('Fehlerhafte Eingabe', $httperr->getMessage());
             $this->assertSame([
@@ -510,6 +495,8 @@ final class UpdateUserEndpointTest extends UnitTestCase {
     }
 
     public function testUpdateUserEndpointRemoveAvatar(): void {
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::defaultUser();
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         WithUtilsCache::get('envUtils')->fake_data_path = 'fake-data-path/';
         $endpoint = new UpdateUserEndpointForTest();
         $endpoint->runtimeSetup();
@@ -520,18 +507,23 @@ final class UpdateUserEndpointTest extends UnitTestCase {
             'user' => 'admin',
         ];
         $endpoint->setSession($session);
+        $endpoint->setRecaptchaUtils(new FakeRecaptchaUtils());
 
         $result = $endpoint->call([
             ...self::MINIMAL_INPUT,
-            'avatarId' => '-',
-            'recaptchaToken' => 'valid-recaptcha-token',
+            'data' => [
+                ...self::MINIMAL_INPUT['data'],
+                'avatarId' => '-',
+            ],
         ]);
 
         $this->assertSame([
             "INFO Valid user request",
+            "NOTICE OLD:",
+            "NOTICE NEW:",
             "INFO Valid user response",
         ], $this->getLogs());
-        $this->assertSame(['status' => 'OK'], $result);
+        $this->assertSame(['status' => 'OK', 'id' => 2], $result);
         $admin_user = FakeUser::adminUser();
         $this->assertSame(2, $admin_user->getId());
         $this->assertSame('test', $admin_user->getUsername());
@@ -562,5 +554,55 @@ final class UpdateUserEndpointTest extends UnitTestCase {
             'fake-data-path/img/users/2.jpg',
         ], $endpoint->unlink_calls);
         $this->assertSame([], $endpoint->rename_calls);
+    }
+
+    public function testUpdateUserEndpointNoAccess(): void {
+        WithUtilsCache::get('authUtils')->has_permission_by_query = ['users' => false];
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = false;
+        $endpoint = new UpdateUserEndpoint();
+        $endpoint->runtimeSetup();
+
+        try {
+            $endpoint->call(self::MAXIMAL_INPUT);
+            $this->fail('Error expected');
+        } catch (HttpError $err) {
+            $this->assertSame([
+                "INFO Valid user request",
+                "WARNING HTTP error 403",
+            ], $this->getLogs());
+
+            $this->assertSame([
+                [FakeUser::adminUser(), 'admin', 'admin', null, null, 'users'],
+            ], WithUtilsCache::get('entityUtils')->can_update_olz_entity_calls);
+
+            $this->assertSame(403, $err->getCode());
+        }
+    }
+
+    public function testUpdateUserEndpointNoSuchEntity(): void {
+        WithUtilsCache::get('authUtils')->has_permission_by_query = ['users' => true];
+        WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
+        $endpoint = new UpdateUserEndpoint();
+        $endpoint->runtimeSetup();
+
+        try {
+            $endpoint->call([
+                ...self::MAXIMAL_INPUT,
+                'id' => FakeOlzRepository::NULL_ID,
+            ]);
+            $this->fail('Error expected');
+        } catch (HttpError $err) {
+            $this->assertSame([
+                "INFO Valid user request",
+                "WARNING HTTP error 404",
+            ], $this->getLogs());
+
+            $this->assertSame(
+                [],
+                WithUtilsCache::get('entityUtils')->can_update_olz_entity_calls,
+            );
+
+            $this->assertSame(404, $err->getCode());
+        }
     }
 }

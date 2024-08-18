@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Olz\Tests\UnitTests\Api\Endpoints;
+namespace Olz\Tests\UnitTests\Users\Endpoints;
 
-use Olz\Api\Endpoints\SignUpWithPasswordEndpoint;
 use Olz\Entity\AuthRequest;
-use Olz\Tests\Fake;
 use Olz\Tests\Fake\Entity\FakeUser;
+use Olz\Tests\Fake\FakeEntityManager;
 use Olz\Tests\UnitTests\Common\UnitTestCase;
+use Olz\Users\Endpoints\CreateUserEndpoint;
 use Olz\Utils\MemorySession;
 use Olz\Utils\WithUtilsCache;
 use PhpTypeScriptApi\HttpError;
@@ -16,74 +16,103 @@ use PhpTypeScriptApi\HttpError;
 /**
  * @internal
  *
- * @deprecated Use CreateUserEndpoint instead
- *
- * @covers \Olz\Api\Endpoints\SignUpWithPasswordEndpoint
+ * @covers \Olz\Users\Endpoints\CreateUserEndpoint
  */
-final class SignUpWithPasswordEndpointTest extends UnitTestCase {
+final class CreateUserEndpointTest extends UnitTestCase {
     public const MINIMAL_INPUT = [
-        'firstName' => 'fakeFirstName',
-        'lastName' => 'fakeLastName',
-        'username' => 'fakeUsername',
-        'password' => 'securePassword',
-        'email' => 'fakeEmail',
-        'phone' => null,
-        'gender' => null,
-        'birthdate' => null,
-        'street' => null,
-        'postalCode' => null,
-        'city' => null,
-        'region' => null,
-        'countryCode' => null,
-        'siCardNumber' => null,
-        'solvNumber' => null,
-        'recaptchaToken' => 'fake-recaptcha-token',
-    ];
-    public const MAXIMAL_INPUT = [
-        'firstName' => 'fakeFirstName',
-        'lastName' => 'fakeLastName',
-        'username' => 'fakeUsername',
-        'password' => 'securePassword',
-        'email' => 'fakeEmail',
-        'phone' => '+41441234567',
-        'gender' => 'M',
-        'birthdate' => '2020-03-13',
-        'street' => 'fakeStreet',
-        'postalCode' => 'fakePostalCode',
-        'city' => 'fakeCity',
-        'region' => 'fakeRegion',
-        'countryCode' => 'CC',
-        'siCardNumber' => 1234567,
-        'solvNumber' => 'JACK7NORRIS',
-        'recaptchaToken' => 'fake-recaptcha-token',
+        'meta' => [
+            'ownerUserId' => 1,
+            'ownerRoleId' => 1,
+            'onOff' => true,
+        ],
+        'data' => [
+            'firstName' => 'fakeFirstName',
+            'lastName' => 'fakeLastName',
+            'username' => 'fakeUsername',
+            'password' => 'securePassword',
+            'email' => 'fakeEmail',
+            'phone' => null,
+            'gender' => null,
+            'birthdate' => null,
+            'street' => null,
+            'postalCode' => null,
+            'city' => null,
+            'region' => null,
+            'countryCode' => null,
+            'siCardNumber' => null,
+            'solvNumber' => null,
+            'avatarId' => null,
+        ],
+        'custom' => [
+            'recaptchaToken' => 'valid-token',
+        ],
     ];
 
-    public function testSignUpWithPasswordEndpointIdent(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
-        $this->assertSame('SignUpWithPasswordEndpoint', $endpoint->getIdent());
+    public const MAXIMAL_INPUT = [
+        'meta' => [
+            'ownerUserId' => 1,
+            'ownerRoleId' => 1,
+            'onOff' => true,
+        ],
+        'data' => [
+            'firstName' => 'fakeFirstName',
+            'lastName' => 'fakeLastName',
+            'username' => 'fakeUsername',
+            'password' => 'securePassword',
+            'email' => 'fakeEmail',
+            'phone' => '+41441234567',
+            'gender' => 'M',
+            'birthdate' => '2020-03-13',
+            'street' => 'fakeStreet',
+            'postalCode' => 'fakePostalCode',
+            'city' => 'fakeCity',
+            'region' => 'fakeRegion',
+            'countryCode' => 'CC',
+            'siCardNumber' => 1234567,
+            'solvNumber' => 'JACK7NORRIS',
+            'avatarId' => 'fake-avatar-id.jpg',
+        ],
+        'custom' => [
+            'recaptchaToken' => 'valid-token',
+        ],
+    ];
+
+    public function testCreateUserEndpointIdent(): void {
+        $endpoint = new CreateUserEndpoint();
+        $this->assertSame('CreateUserEndpoint', $endpoint->getIdent());
     }
 
-    public function testSignUpWithPasswordEndpointWithoutInput(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithoutInput(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         try {
             $endpoint->call([
-                'firstName' => null,
-                'lastName' => null,
-                'username' => null,
-                'password' => null,
-                'email' => null,
-                'phone' => null,
-                'gender' => null,
-                'birthdate' => null,
-                'street' => null,
-                'postalCode' => null,
-                'city' => null,
-                'region' => null,
-                'countryCode' => null,
-                'siCardNumber' => null,
-                'solvNumber' => null,
-                'recaptchaToken' => null,
+                'meta' => [
+                    'ownerUserId' => null,
+                    'ownerRoleId' => null,
+                    'onOff' => true,
+                ],
+                'data' => [
+                    'firstName' => null,
+                    'lastName' => null,
+                    'username' => null,
+                    'email' => null,
+                    'password' => null,
+                    'phone' => null,
+                    'gender' => null,
+                    'birthdate' => null,
+                    'street' => null,
+                    'postalCode' => null,
+                    'city' => null,
+                    'region' => null,
+                    'countryCode' => null,
+                    'siCardNumber' => null,
+                    'solvNumber' => null,
+                    'avatarId' => null,
+                ],
+                'custom' => [
+                    'recaptchaToken' => null,
+                ],
             ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
@@ -92,17 +121,18 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
             ], $this->getLogs());
             $this->assertSame('Fehlerhafte Eingabe', $httperr->getMessage());
             $this->assertSame([
-                'firstName' => [['.' => ['Feld darf nicht leer sein.']]],
-                'lastName' => [['.' => ['Feld darf nicht leer sein.']]],
-                'username' => [['.' => ['Feld darf nicht leer sein.']]],
-                'recaptchaToken' => [['.' => ['Feld darf nicht leer sein.']]],
+                'data' => [[
+                    'firstName' => [['.' => ['Feld darf nicht leer sein.']]],
+                    'lastName' => [['.' => ['Feld darf nicht leer sein.']]],
+                    'username' => [['.' => ['Feld darf nicht leer sein.']]],
+                ]],
                 // @phpstan-ignore-next-line
             ], $httperr->getPrevious()->getValidationErrors());
         }
     }
 
-    public function testSignUpWithPasswordEndpointWithInvalidRecaptchaToken(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithInvalidRecaptchaToken(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -110,17 +140,18 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
 
         $result = $endpoint->call([
             ...self::MINIMAL_INPUT,
-            'recaptchaToken' => 'invalid-token',
+            'custom' => ['recaptchaToken' => 'invalid-token'],
         ]);
 
         $this->assertSame([
             'status' => 'DENIED',
+            'id' => null,
         ], $result);
         $this->assertSame([], $session->session_storage);
     }
 
-    public function testSignUpWithPasswordEndpointWithInvalidUsername(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithInvalidUsername(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -129,7 +160,10 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         try {
             $endpoint->call([
                 ...self::MINIMAL_INPUT,
-                'username' => 'inv@lid',
+                'data' => [
+                    ...self::MINIMAL_INPUT['data'],
+                    'username' => 'inv@lid',
+                ],
             ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
@@ -146,8 +180,8 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testSignUpWithPasswordEndpointWithShortPassword(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithShortPassword(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -156,7 +190,10 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         try {
             $endpoint->call([
                 ...self::MINIMAL_INPUT,
-                'password' => 'short',
+                'data' => [
+                    ...self::MINIMAL_INPUT['data'],
+                    'password' => 'short',
+                ],
             ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
@@ -173,8 +210,8 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testSignUpWithPasswordEndpointWithOlzimmerbergEmail(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithOlzimmerbergEmail(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -183,7 +220,10 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         try {
             $endpoint->call([
                 ...self::MINIMAL_INPUT,
-                'email' => 'bot@olzimmerberg.ch',
+                'data' => [
+                    ...self::MINIMAL_INPUT['data'],
+                    'email' => 'bot@olzimmerberg.ch',
+                ],
             ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
@@ -200,8 +240,8 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testSignUpWithPasswordEndpointWithoutEmail(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithoutEmail(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -210,7 +250,10 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         try {
             $endpoint->call([
                 ...self::MINIMAL_INPUT,
-                'email' => null,
+                'data' => [
+                    ...self::MINIMAL_INPUT['data'],
+                    'email' => null,
+                ],
             ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
@@ -227,8 +270,8 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testSignUpWithPasswordEndpointWithoutPassword(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithoutPassword(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -237,7 +280,10 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         try {
             $endpoint->call([
                 ...self::MINIMAL_INPUT,
-                'password' => null,
+                'data' => [
+                    ...self::MINIMAL_INPUT['data'],
+                    'password' => null,
+                ],
             ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
@@ -254,8 +300,8 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testSignUpWithPasswordEndpointWithMinimalDataForNewUser(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithMinimalDataForNewUser(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -270,14 +316,15 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $this->getLogs());
         $this->assertSame([
             'status' => 'OK',
+            'id' => FakeEntityManager::AUTO_INCREMENT_ID,
         ], $result);
         $this->assertSame([
             'auth' => '',
             'root' => null,
             'user' => 'fakeUsername',
-            'user_id' => strval(Fake\FakeEntityManager::AUTO_INCREMENT_ID),
+            'user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
             'auth_user' => 'fakeUsername',
-            'auth_user_id' => strval(Fake\FakeEntityManager::AUTO_INCREMENT_ID),
+            'auth_user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
         ], $session->session_storage);
         $entity_manager = WithUtilsCache::get('entityManager');
         $this->assertSame([
@@ -290,7 +337,7 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $entity_manager->getRepository(AuthRequest::class)->auth_requests);
         $this->assertCount(1, $entity_manager->persisted);
         $user = $entity_manager->persisted[0];
-        $this->assertSame(Fake\FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
+        $this->assertSame(FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
         $this->assertSame('fakeUsername', $user->getUsername());
         $this->assertNull($user->getOldUsername());
         $this->assertSame('fakeEmail', $user->getEmail());
@@ -314,8 +361,8 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         $this->assertSame($entity_manager->persisted, $entity_manager->flushed_persisted);
     }
 
-    public function testSignUpWithPasswordEndpointWithMaximalDataForNewUser(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithMaximalDataForNewUser(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -330,14 +377,15 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $this->getLogs());
         $this->assertSame([
             'status' => 'OK',
+            'id' => FakeEntityManager::AUTO_INCREMENT_ID,
         ], $result);
         $this->assertSame([
             'auth' => '',
             'root' => null,
             'user' => 'fakeUsername',
-            'user_id' => strval(Fake\FakeEntityManager::AUTO_INCREMENT_ID),
+            'user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
             'auth_user' => 'fakeUsername',
-            'auth_user_id' => strval(Fake\FakeEntityManager::AUTO_INCREMENT_ID),
+            'auth_user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
         ], $session->session_storage);
         $entity_manager = WithUtilsCache::get('entityManager');
         $this->assertSame([
@@ -350,7 +398,7 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $entity_manager->getRepository(AuthRequest::class)->auth_requests);
         $this->assertCount(1, $entity_manager->persisted);
         $user = $entity_manager->persisted[0];
-        $this->assertSame(Fake\FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
+        $this->assertSame(FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
         $this->assertSame('fakeUsername', $user->getUsername());
         $this->assertNull($user->getOldUsername());
         $this->assertSame('fakeEmail', $user->getEmail());
@@ -374,9 +422,9 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         $this->assertSame($entity_manager->persisted, $entity_manager->flushed_persisted);
     }
 
-    public function testSignUpWithPasswordEndpointWithMinimalDataForNewFamilyUser(): void {
+    public function testCreateUserEndpointWithMinimalDataForNewFamilyUser(): void {
         WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
-        $endpoint = new SignUpWithPasswordEndpoint();
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -384,8 +432,11 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
 
         $result = $endpoint->call([
             ...self::MINIMAL_INPUT,
-            'email' => null,
-            'password' => null,
+            'data' => [
+                ...self::MINIMAL_INPUT['data'],
+                'email' => null,
+                'password' => null,
+            ],
         ]);
 
         $this->assertSame([
@@ -395,13 +446,14 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $this->getLogs());
         $this->assertSame([
             'status' => 'OK',
+            'id' => FakeEntityManager::AUTO_INCREMENT_ID,
         ], $result);
         $this->assertSame([], $session->session_storage);
         $entity_manager = WithUtilsCache::get('entityManager');
         $this->assertSame([], $entity_manager->getRepository(AuthRequest::class)->auth_requests);
         $this->assertCount(1, $entity_manager->persisted);
         $user = $entity_manager->persisted[0];
-        $this->assertSame(Fake\FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
+        $this->assertSame(FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
         $this->assertSame('fakeUsername', $user->getUsername());
         $this->assertNull($user->getOldUsername());
         $this->assertNull($user->getEmail());
@@ -425,9 +477,9 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         $this->assertSame($entity_manager->persisted, $entity_manager->flushed_persisted);
     }
 
-    public function testSignUpWithPasswordEndpointWithMaximalDataForNewFamilyUser(): void {
+    public function testCreateUserEndpointWithMaximalDataForNewFamilyUser(): void {
         WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
-        $endpoint = new SignUpWithPasswordEndpoint();
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -442,13 +494,14 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $this->getLogs());
         $this->assertSame([
             'status' => 'OK',
+            'id' => FakeEntityManager::AUTO_INCREMENT_ID,
         ], $result);
         $this->assertSame([], $session->session_storage);
         $entity_manager = WithUtilsCache::get('entityManager');
         $this->assertSame([], $entity_manager->getRepository(AuthRequest::class)->auth_requests);
         $this->assertCount(1, $entity_manager->persisted);
         $user = $entity_manager->persisted[0];
-        $this->assertSame(Fake\FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
+        $this->assertSame(FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
         $this->assertSame('fakeUsername', $user->getUsername());
         $this->assertNull($user->getOldUsername());
         $this->assertSame('fakeEmail', $user->getEmail());
@@ -472,8 +525,8 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         $this->assertSame($entity_manager->persisted, $entity_manager->flushed_persisted);
     }
 
-    public function testSignUpWithPasswordEndpointWithValidDataForExistingUsernameWithoutPassword(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithValidDataForExistingUsernameWithoutPassword(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -481,7 +534,10 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
 
         $result = $endpoint->call([
             ...self::MINIMAL_INPUT,
-            'username' => 'child1', // has no password yet
+            'data' => [
+                ...self::MINIMAL_INPUT['data'],
+                'username' => 'child1', // has no password yet
+            ],
         ]);
 
         $this->assertSame([
@@ -491,6 +547,7 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $this->getLogs());
         $this->assertSame([
             'status' => 'OK',
+            'id' => 5,
         ], $result);
         $this->assertSame([
             'auth' => '',
@@ -511,8 +568,8 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $entity_manager->getRepository(AuthRequest::class)->auth_requests);
     }
 
-    public function testSignUpWithPasswordEndpointWithValidDataForExistingUsernameWithPassword(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithValidDataForExistingUsernameWithPassword(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -521,7 +578,10 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         try {
             $endpoint->call([
                 ...self::MINIMAL_INPUT,
-                'username' => 'admin', // has a password
+                'data' => [
+                    ...self::MINIMAL_INPUT['data'],
+                    'username' => 'admin', // has a password
+                ],
             ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
@@ -546,8 +606,8 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testSignUpWithPasswordEndpointWithValidDataForExistingEmailWithoutPassword(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithValidDataForExistingEmailWithoutPassword(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -555,8 +615,11 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
 
         $result = $endpoint->call([
             ...self::MINIMAL_INPUT,
-            'username' => 'inexistent',
-            'email' => 'child1@gmail.com',
+            'data' => [
+                ...self::MINIMAL_INPUT['data'],
+                'username' => 'inexistent',
+                'email' => 'child1@gmail.com',
+            ],
         ]);
 
         $this->assertSame([
@@ -566,6 +629,7 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $this->getLogs());
         $this->assertSame([
             'status' => 'OK',
+            'id' => 5,
         ], $result);
         $this->assertSame([
             'auth' => '',
@@ -586,8 +650,8 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $entity_manager->getRepository(AuthRequest::class)->auth_requests);
     }
 
-    public function testSignUpWithPasswordEndpointWithValidDataForExistingEmailWithPassword(): void {
-        $endpoint = new SignUpWithPasswordEndpoint();
+    public function testCreateUserEndpointWithValidDataForExistingEmailWithPassword(): void {
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -596,8 +660,11 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         try {
             $endpoint->call([
                 ...self::MINIMAL_INPUT,
-                'username' => 'inexistent',
-                'email' => 'admin@gmail.com',
+                'data' => [
+                    ...self::MINIMAL_INPUT['data'],
+                    'username' => 'inexistent',
+                    'email' => 'admin@gmail.com',
+                ],
             ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {
@@ -622,9 +689,9 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testSignUpWithPasswordEndpointErrorSending(): void {
+    public function testCreateUserEndpointErrorSending(): void {
         WithUtilsCache::get('emailUtils')->send_email_verification_email_error = new \Exception('test');
-        $endpoint = new SignUpWithPasswordEndpoint();
+        $endpoint = new CreateUserEndpoint();
         $endpoint->runtimeSetup();
         $session = new MemorySession();
         $endpoint->setSession($session);
@@ -640,14 +707,15 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $this->getLogs());
         $this->assertSame([
             'status' => 'OK_NO_EMAIL_VERIFICATION',
+            'id' => FakeEntityManager::AUTO_INCREMENT_ID,
         ], $result);
         $this->assertSame([
             'auth' => '',
             'root' => null,
             'user' => 'fakeUsername',
-            'user_id' => strval(Fake\FakeEntityManager::AUTO_INCREMENT_ID),
+            'user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
             'auth_user' => 'fakeUsername',
-            'auth_user_id' => strval(Fake\FakeEntityManager::AUTO_INCREMENT_ID),
+            'auth_user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
         ], $session->session_storage);
         $entity_manager = WithUtilsCache::get('entityManager');
         $this->assertSame([
@@ -660,7 +728,7 @@ final class SignUpWithPasswordEndpointTest extends UnitTestCase {
         ], $entity_manager->getRepository(AuthRequest::class)->auth_requests);
         $this->assertCount(1, $entity_manager->persisted);
         $user = $entity_manager->persisted[0];
-        $this->assertSame(Fake\FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
+        $this->assertSame(FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
         $this->assertSame('fakeUsername', $user->getUsername());
         $this->assertNull($user->getOldUsername());
         $this->assertSame('fakeEmail', $user->getEmail());
