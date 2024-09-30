@@ -28,9 +28,9 @@ final class CreateUserEndpointTest extends UnitTestCase {
         'data' => [
             'firstName' => 'fakeFirstName',
             'lastName' => 'fakeLastName',
-            'username' => 'fakeUsername',
+            'username' => 'minimal-user',
             'password' => 'securePassword',
-            'email' => 'fakeEmail',
+            'email' => 'minimal-user@staging.olzimmerberg.ch',
             'phone' => null,
             'gender' => null,
             'birthdate' => null,
@@ -57,9 +57,9 @@ final class CreateUserEndpointTest extends UnitTestCase {
         'data' => [
             'firstName' => 'fakeFirstName',
             'lastName' => 'fakeLastName',
-            'username' => 'fakeUsername',
+            'username' => 'maximal-user',
             'password' => 'securePassword',
-            'email' => 'fakeEmail',
+            'email' => 'maximal-user@staging.olzimmerberg.ch',
             'phone' => '+41441234567',
             'gender' => 'M',
             'birthdate' => '2020-03-13',
@@ -169,7 +169,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
         } catch (HttpError $httperr) {
             $this->assertSame([
                 "INFO Valid user request",
-                "INFO New sign-up (using password): fakeFirstName fakeLastName (inv@lid@) <fakeEmail>",
+                "INFO New sign-up (using password): fakeFirstName fakeLastName (inv@lid@) <minimal-user@staging.olzimmerberg.ch>",
                 "WARNING Bad user request",
             ], $this->getLogs());
             $this->assertSame('Fehlerhafte Eingabe', $httperr->getMessage());
@@ -199,7 +199,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
         } catch (HttpError $httperr) {
             $this->assertSame([
                 "INFO Valid user request",
-                "INFO New sign-up (using password): fakeFirstName fakeLastName (fakeUsername@) <fakeEmail>",
+                "INFO New sign-up (using password): fakeFirstName fakeLastName (minimal-user@) <minimal-user@staging.olzimmerberg.ch>",
                 "WARNING Bad user request",
             ], $this->getLogs());
             $this->assertSame('Fehlerhafte Eingabe', $httperr->getMessage());
@@ -229,7 +229,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
         } catch (HttpError $httperr) {
             $this->assertSame([
                 "INFO Valid user request",
-                "INFO New sign-up (using password): fakeFirstName fakeLastName (fakeUsername@) <bot@olzimmerberg.ch>",
+                "INFO New sign-up (using password): fakeFirstName fakeLastName (minimal-user@) <bot@olzimmerberg.ch>",
                 "WARNING Bad user request",
             ], $this->getLogs());
             $this->assertSame('Fehlerhafte Eingabe', $httperr->getMessage());
@@ -259,7 +259,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
         } catch (HttpError $httperr) {
             $this->assertSame([
                 "INFO Valid user request",
-                "INFO New sign-up (using password): fakeFirstName fakeLastName (fakeUsername@) <>",
+                "INFO New sign-up (using password): fakeFirstName fakeLastName (minimal-user@) <>",
                 "WARNING Bad user request",
             ], $this->getLogs());
             $this->assertSame('Fehlerhafte Eingabe', $httperr->getMessage());
@@ -289,7 +289,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
         } catch (HttpError $httperr) {
             $this->assertSame([
                 "INFO Valid user request",
-                "INFO New sign-up (using password): fakeFirstName fakeLastName (fakeUsername@) <fakeEmail>",
+                "INFO New sign-up (using password): fakeFirstName fakeLastName (minimal-user@) <minimal-user@staging.olzimmerberg.ch>",
                 "WARNING Bad user request",
             ], $this->getLogs());
             $this->assertSame('Fehlerhafte Eingabe', $httperr->getMessage());
@@ -311,7 +311,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
 
         $this->assertSame([
             "INFO Valid user request",
-            "INFO New sign-up (using password): fakeFirstName fakeLastName (fakeUsername@) <fakeEmail>",
+            "INFO New sign-up (using password): fakeFirstName fakeLastName (minimal-user@) <minimal-user@staging.olzimmerberg.ch>",
             "INFO Valid user response",
         ], $this->getLogs());
         $this->assertSame([
@@ -321,9 +321,9 @@ final class CreateUserEndpointTest extends UnitTestCase {
         $this->assertSame([
             'auth' => '',
             'root' => null,
-            'user' => 'fakeUsername',
+            'user' => 'minimal-user',
             'user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
-            'auth_user' => 'fakeUsername',
+            'auth_user' => 'minimal-user',
             'auth_user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
         ], $session->session_storage);
         $entity_manager = WithUtilsCache::get('entityManager');
@@ -332,15 +332,15 @@ final class CreateUserEndpointTest extends UnitTestCase {
                 'ip_address' => '1.2.3.4',
                 'action' => 'AUTHENTICATED_PASSWORD',
                 'timestamp' => null,
-                'username' => 'fakeUsername',
+                'username' => 'minimal-user',
             ],
         ], $entity_manager->getRepository(AuthRequest::class)->auth_requests);
         $this->assertCount(1, $entity_manager->persisted);
         $user = $entity_manager->persisted[0];
         $this->assertSame(FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
-        $this->assertSame('fakeUsername', $user->getUsername());
+        $this->assertSame('minimal-user', $user->getUsername());
         $this->assertNull($user->getOldUsername());
-        $this->assertSame('fakeEmail', $user->getEmail());
+        $this->assertSame('minimal-user@staging.olzimmerberg.ch', $user->getEmail());
         $this->assertFalse($user->isEmailVerified());
         $this->assertNull($user->getEmailVerificationToken());
         $this->assertFalse($user->hasPermission('verified_email'));
@@ -372,7 +372,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
 
         $this->assertSame([
             "INFO Valid user request",
-            "INFO New sign-up (using password): fakeFirstName fakeLastName (fakeUsername@) <fakeEmail>",
+            "INFO New sign-up (using password): fakeFirstName fakeLastName (minimal-user@) <minimal-user@staging.olzimmerberg.ch>",
             "INFO Valid user response",
         ], $this->getLogs());
         $this->assertSame([
@@ -382,9 +382,9 @@ final class CreateUserEndpointTest extends UnitTestCase {
         $this->assertSame([
             'auth' => '',
             'root' => null,
-            'user' => 'fakeUsername',
+            'user' => 'minimal-user',
             'user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
-            'auth_user' => 'fakeUsername',
+            'auth_user' => 'minimal-user',
             'auth_user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
         ], $session->session_storage);
         $entity_manager = WithUtilsCache::get('entityManager');
@@ -393,15 +393,15 @@ final class CreateUserEndpointTest extends UnitTestCase {
                 'ip_address' => '1.2.3.4',
                 'action' => 'AUTHENTICATED_PASSWORD',
                 'timestamp' => null,
-                'username' => 'fakeUsername',
+                'username' => 'minimal-user',
             ],
         ], $entity_manager->getRepository(AuthRequest::class)->auth_requests);
         $this->assertCount(1, $entity_manager->persisted);
         $user = $entity_manager->persisted[0];
         $this->assertSame(FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
-        $this->assertSame('fakeUsername', $user->getUsername());
+        $this->assertSame('minimal-user', $user->getUsername());
         $this->assertNull($user->getOldUsername());
-        $this->assertSame('fakeEmail', $user->getEmail());
+        $this->assertSame('minimal-user@staging.olzimmerberg.ch', $user->getEmail());
         $this->assertFalse($user->isEmailVerified());
         $this->assertNull($user->getEmailVerificationToken());
         $this->assertFalse($user->hasPermission('verified_email'));
@@ -441,7 +441,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
 
         $this->assertSame([
             "INFO Valid user request",
-            "INFO New sign-up (using password): fakeFirstName fakeLastName (fakeUsername@) <>",
+            "INFO New sign-up (using password): fakeFirstName fakeLastName (minimal-user@) <>",
             "INFO Valid user response",
         ], $this->getLogs());
         $this->assertSame([
@@ -454,7 +454,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
         $this->assertCount(1, $entity_manager->persisted);
         $user = $entity_manager->persisted[0];
         $this->assertSame(FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
-        $this->assertSame('fakeUsername', $user->getUsername());
+        $this->assertSame('minimal-user', $user->getUsername());
         $this->assertNull($user->getOldUsername());
         $this->assertNull($user->getEmail());
         $this->assertFalse($user->isEmailVerified());
@@ -489,7 +489,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
 
         $this->assertSame([
             "INFO Valid user request",
-            "INFO New sign-up (using password): fakeFirstName fakeLastName (fakeUsername@) <fakeEmail>",
+            "INFO New sign-up (using password): fakeFirstName fakeLastName (minimal-user@) <minimal-user@staging.olzimmerberg.ch>",
             "INFO Valid user response",
         ], $this->getLogs());
         $this->assertSame([
@@ -502,9 +502,9 @@ final class CreateUserEndpointTest extends UnitTestCase {
         $this->assertCount(1, $entity_manager->persisted);
         $user = $entity_manager->persisted[0];
         $this->assertSame(FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
-        $this->assertSame('fakeUsername', $user->getUsername());
+        $this->assertSame('minimal-user', $user->getUsername());
         $this->assertNull($user->getOldUsername());
-        $this->assertSame('fakeEmail', $user->getEmail());
+        $this->assertSame('minimal-user@staging.olzimmerberg.ch', $user->getEmail());
         $this->assertFalse($user->isEmailVerified());
         $this->assertNull($user->getEmailVerificationToken());
         $this->assertFalse($user->hasPermission('verified_email'));
@@ -542,7 +542,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
 
         $this->assertSame([
             "INFO Valid user request",
-            "INFO New sign-up (using password): fakeFirstName fakeLastName (child1@) <fakeEmail>",
+            "INFO New sign-up (using password): fakeFirstName fakeLastName (child1@) <minimal-user@staging.olzimmerberg.ch>",
             "INFO Valid user response",
         ], $this->getLogs());
         $this->assertSame([
@@ -587,7 +587,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
         } catch (HttpError $httperr) {
             $this->assertSame([
                 "INFO Valid user request",
-                "INFO New sign-up (using password): fakeFirstName fakeLastName (admin@) <fakeEmail>",
+                "INFO New sign-up (using password): fakeFirstName fakeLastName (admin@) <minimal-user@staging.olzimmerberg.ch>",
                 "WARNING Bad user request",
             ], $this->getLogs());
             $this->assertSame('Fehlerhafte Eingabe', $httperr->getMessage());
@@ -701,7 +701,7 @@ final class CreateUserEndpointTest extends UnitTestCase {
 
         $this->assertSame([
             "INFO Valid user request",
-            "INFO New sign-up (using password): fakeFirstName fakeLastName (fakeUsername@) <fakeEmail>",
+            "INFO New sign-up (using password): fakeFirstName fakeLastName (minimal-user@) <minimal-user@staging.olzimmerberg.ch>",
             "ERROR Error sending fake verification email",
             "INFO Valid user response",
         ], $this->getLogs());
@@ -712,9 +712,9 @@ final class CreateUserEndpointTest extends UnitTestCase {
         $this->assertSame([
             'auth' => '',
             'root' => null,
-            'user' => 'fakeUsername',
+            'user' => 'minimal-user',
             'user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
-            'auth_user' => 'fakeUsername',
+            'auth_user' => 'minimal-user',
             'auth_user_id' => strval(FakeEntityManager::AUTO_INCREMENT_ID),
         ], $session->session_storage);
         $entity_manager = WithUtilsCache::get('entityManager');
@@ -723,15 +723,15 @@ final class CreateUserEndpointTest extends UnitTestCase {
                 'ip_address' => '1.2.3.4',
                 'action' => 'AUTHENTICATED_PASSWORD',
                 'timestamp' => null,
-                'username' => 'fakeUsername',
+                'username' => 'minimal-user',
             ],
         ], $entity_manager->getRepository(AuthRequest::class)->auth_requests);
         $this->assertCount(1, $entity_manager->persisted);
         $user = $entity_manager->persisted[0];
         $this->assertSame(FakeEntityManager::AUTO_INCREMENT_ID, $user->getId());
-        $this->assertSame('fakeUsername', $user->getUsername());
+        $this->assertSame('minimal-user', $user->getUsername());
         $this->assertNull($user->getOldUsername());
-        $this->assertSame('fakeEmail', $user->getEmail());
+        $this->assertSame('minimal-user@staging.olzimmerberg.ch', $user->getEmail());
         $this->assertFalse($user->isEmailVerified());
         $this->assertNull($user->getEmailVerificationToken());
         $this->assertFalse($user->hasPermission('verified_email'));

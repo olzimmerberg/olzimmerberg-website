@@ -71,7 +71,7 @@ final class AuthUtilsTest extends UnitTestCase {
     public function testAuthenticateWithWrongUsername(): void {
         $session = new MemorySession();
         $session->session_storage = [
-            'user' => 'inexistent',
+            'user' => 'previous',
         ];
 
         $auth_utils = new AuthUtils();
@@ -79,17 +79,20 @@ final class AuthUtilsTest extends UnitTestCase {
         $auth_utils->setSession($session);
 
         try {
-            $auth_utils->authenticate('wrooong', 'adm1n');
+            $auth_utils->authenticate('inexistent', 'adm1n');
             $this->fail('Error expected');
         } catch (\Exception $exc) {
             $this->assertSame(
-                'Login attempt with invalid credentials from IP: 1.2.3.4 (user: wrooong).',
+                'Login attempt with invalid credentials from IP: 1.2.3.4 (user: inexistent).',
                 $exc->getMessage()
             );
         }
 
         $this->assertSame([
-            'user' => 'inexistent',
+            "NOTICE Login attempt with invalid credentials from IP: 1.2.3.4 (user: inexistent).",
+        ], $this->getLogs());
+        $this->assertSame([
+            'user' => 'previous',
         ], $session->session_storage);
         $entity_manager = WithUtilsCache::get('entityManager');
         $this->assertSame([
@@ -97,12 +100,9 @@ final class AuthUtilsTest extends UnitTestCase {
                 'ip_address' => '1.2.3.4',
                 'action' => 'INVALID_CREDENTIALS',
                 'timestamp' => null,
-                'username' => 'wrooong',
+                'username' => 'inexistent',
             ],
         ], $entity_manager->getRepository(AuthRequest::class)->auth_requests);
-        $this->assertSame([
-            "NOTICE Login attempt with invalid credentials from IP: 1.2.3.4 (user: wrooong).",
-        ], $this->getLogs());
     }
 
     public function testAuthenticateWithWrongPassword(): void {
@@ -339,8 +339,8 @@ final class AuthUtilsTest extends UnitTestCase {
     public function testResolveEmail(): void {
         $auth_utils = new AuthUtils();
 
-        $result = $auth_utils->resolveUsernameOrEmail('vorstand@olzimmerberg.ch');
-        $this->assertSame(FakeUser::vorstandUser(), $result);
+        $result = $auth_utils->resolveUsernameOrEmail('admin@gmail.com');
+        $this->assertSame(FakeUser::adminUser(), $result);
     }
 
     public function testResolveUsernameEmail(): void {

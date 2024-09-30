@@ -12,6 +12,7 @@ use Olz\Tests\Fake\Entity\Common\FakeOlzRepository;
  */
 class FakeUserRepository extends FakeOlzRepository {
     public string $olzEntityClass = User::class;
+    public string $fakeOlzEntityClass = FakeUser::class;
 
     public ?User $userToBeFound = null;
     public mixed $userToBeFoundForQuery = null;
@@ -36,14 +37,35 @@ class FakeUserRepository extends FakeOlzRepository {
             $fn = $this->userToBeFoundForQuery;
             return $fn($criteria);
         }
+        if (
+            $criteria === ['username' => 'minimal-user']
+            || $criteria === ['old_username' => 'minimal-user-old']
+            || $criteria === ['email' => 'minimal-user@staging.olzimmerberg.ch']
+        ) {
+            return FakeUser::minimal();
+        }
+        if (
+            $criteria === ['username' => 'empty-user']
+            || $criteria === ['old_username' => 'empty-user-old']
+            || $criteria === ['email' => 'empty-user@staging.olzimmerberg.ch']
+        ) {
+            return FakeUser::empty();
+        }
+        if (
+            $criteria === ['username' => 'maximal-user']
+            || $criteria === ['old_username' => 'maximal-user-old']
+            || $criteria === ['email' => 'maximal-user@staging.olzimmerberg.ch']
+        ) {
+            return FakeUser::maximal();
+        }
         if ($criteria === ['username' => 'user'] || $criteria === ['id' => 1]) {
             return FakeUser::defaultUser();
         }
         if (
             $criteria === ['username' => 'admin']
+            || $criteria === ['old_username' => 'admin-old']
             || $criteria === ['email' => 'admin@gmail.com']
             || $criteria === ['id' => 2]
-            || $criteria === ['old_username' => 'admin-old']
         ) {
             return FakeUser::adminUser();
         }
@@ -73,7 +95,35 @@ class FakeUserRepository extends FakeOlzRepository {
         if ($criteria === ['username' => 'specific']) {
             return FakeUser::specificAccessUser();
         }
-        return null;
+        if (
+            $criteria === ['username' => 'inexistent']
+            || $criteria === ['old_username' => 'inexistent']
+            || $criteria === ['email' => 'inexistent']
+            || $criteria === ['email' => 'inexistent@staging.olzimmerberg.ch']
+        ) {
+            return null;
+        }
+        // Wrong versions of minimal-user
+        if (
+            $criteria === ['old_username' => 'minimal-user']
+        ) {
+            return null;
+        }
+        // Wrong versions of admin
+        if (
+            $criteria === ['username' => 'admin@olzimmerberg.ch']
+            || $criteria === ['old_username' => 'admin@olzimmerberg.ch']
+            || $criteria === ['email' => 'admin@olzimmerberg.ch']
+            || $criteria === ['username' => 'admin@gmail.com']
+            || $criteria === ['username' => 'admin-old@olzimmerberg.ch']
+            || $criteria === ['old_username' => 'admin-old@olzimmerberg.ch']
+            || $criteria === ['email' => 'admin-old@olzimmerberg.ch']
+            || $criteria === ['username' => 'admin-old']
+            || $criteria === ['email' => 'admin-old']
+        ) {
+            return null;
+        }
+        return parent::findOneBy($criteria);
     }
 
     public function findUserFuzzilyByUsername(string $username): ?User {

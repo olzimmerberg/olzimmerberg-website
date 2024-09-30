@@ -13,6 +13,64 @@ use Olz\Tests\Fake\Entity\Roles\FakeRole;
  * @extends FakeEntity<User>
  */
 class FakeUser extends FakeEntity {
+    public static function minimal(bool $fresh = false): object {
+        return self::getFake(
+            $fresh,
+            function () {
+                $entity = new User();
+                FakeOlzEntity::minimal($entity);
+                $entity->setId(12);
+                $entity->setUsername('');
+                return $entity;
+            }
+        );
+    }
+
+    public static function empty(bool $fresh = false): object {
+        return self::getFake(
+            $fresh,
+            function () {
+                $entity = new User();
+                FakeOlzEntity::empty($entity);
+                $entity->setId(123);
+                $entity->setUsername('');
+                return $entity;
+            }
+        );
+    }
+
+    public static function maximal(bool $fresh = false): object {
+        return self::getFake(
+            $fresh,
+            function () {
+                $entity = new User();
+                FakeOlzEntity::maximal($entity);
+                $entity->setId(1234);
+                $entity->setFirstName('Admin');
+                $entity->setLastName('Istrator');
+                $entity->setUsername('admin');
+                $entity->setOldUsername('admin-old');
+                $entity->setEmail('admin-user@staging.olzimmerberg.ch');
+                $entity->setEmailIsVerified(true);
+                $entity->setEmailVerificationToken('admintoken');
+                $entity->setPasswordHash(md5('adm1n')); // just for test
+                $entity->setPermissions('all verified_email');
+                $entity->setRoot('karten');
+                $entity->setPhone('+410123456');
+                $entity->setGender('M');
+                $entity->setBirthdate(new \DateTime('2000-01-01'));
+                $entity->setStreet('Data Hwy. 42');
+                $entity->setPostalCode('19216811');
+                $entity->setRegion('XX');
+                $entity->setCity('Test');
+                $entity->setCountryCode('CH');
+                $entity->setSiCardNumber('127001');
+                $entity->setSolvNumber('000ADM');
+                return $entity;
+            }
+        );
+    }
+
     public static function adminUser(bool $fresh = false): object {
         return self::getFake(
             $fresh,

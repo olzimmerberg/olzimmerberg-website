@@ -112,7 +112,7 @@ final class LoginEndpointTest extends UnitTestCase {
         $endpoint->setSession($session);
 
         $result = $endpoint->call([
-            'usernameOrEmail' => 'wrooong',
+            'usernameOrEmail' => 'inexistent',
             'password' => 'wrooong',
             'rememberMe' => false,
         ]);

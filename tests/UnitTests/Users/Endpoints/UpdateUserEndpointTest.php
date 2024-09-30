@@ -50,7 +50,7 @@ final class UpdateUserEndpointTest extends UnitTestCase {
         'data' => [
             'firstName' => 'First',
             'lastName' => 'Last',
-            'username' => 'test',
+            'username' => 'minimal-user',
             'email' => 'bot@staging.olzimmerberg.ch',
             'password' => null,
             'phone' => null,
@@ -76,7 +76,7 @@ final class UpdateUserEndpointTest extends UnitTestCase {
         'data' => [
             'firstName' => 'First',
             'lastName' => 'Last',
-            'username' => 'test',
+            'username' => 'maximal-user',
             'email' => 'bot@staging.olzimmerberg.ch',
             'password' => null,
             'phone' => '+41441234567',
@@ -173,7 +173,7 @@ final class UpdateUserEndpointTest extends UnitTestCase {
     }
 
     public function testUpdateUserEndpointWithNewOlzimmerbergEmail(): void {
-        WithUtilsCache::get('authUtils')->current_user = FakeUser::adminUser();
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::minimal();
         WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         $endpoint = new UpdateUserEndpointForTest();
         $endpoint->runtimeSetup();
@@ -399,7 +399,7 @@ final class UpdateUserEndpointTest extends UnitTestCase {
                 if ($where === ['id' => 2]) {
                     return FakeUser::adminUser();
                 }
-                if ($where === ['username' => 'test']) {
+                if ($where === ['username' => 'minimal-user']) {
                     return $existing_user;
                 }
                 return null;
@@ -495,7 +495,7 @@ final class UpdateUserEndpointTest extends UnitTestCase {
     }
 
     public function testUpdateUserEndpointRemoveAvatar(): void {
-        WithUtilsCache::get('authUtils')->current_user = FakeUser::defaultUser();
+        WithUtilsCache::get('authUtils')->current_user = FakeUser::minimal();
         WithUtilsCache::get('entityUtils')->can_update_olz_entity = true;
         WithUtilsCache::get('envUtils')->fake_data_path = 'fake-data-path/';
         $endpoint = new UpdateUserEndpointForTest();

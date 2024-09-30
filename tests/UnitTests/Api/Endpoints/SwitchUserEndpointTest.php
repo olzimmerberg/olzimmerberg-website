@@ -177,7 +177,7 @@ final class SwitchUserEndpointTest extends UnitTestCase {
 
         try {
             $endpoint->call([
-                'userId' => 404, // inexistent
+                'userId' => 9999, // inexistent
             ]);
             $this->fail('Exception expected.');
         } catch (HttpError $httperr) {

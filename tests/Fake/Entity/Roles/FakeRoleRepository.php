@@ -25,6 +25,24 @@ class FakeRoleRepository extends FakeOlzRepository {
             $fn = $this->roleToBeFoundForQuery;
             return $fn($criteria);
         }
+        if (
+            $criteria === ['username' => 'minimal-role']
+            || $criteria === ['old_username' => 'minimal-role-old']
+        ) {
+            return FakeRole::minimal();
+        }
+        if (
+            $criteria === ['username' => 'empty-role']
+            || $criteria === ['old_username' => 'empty-role-old']
+        ) {
+            return FakeRole::empty();
+        }
+        if (
+            $criteria === ['username' => 'maximal-role']
+            || $criteria === ['old_username' => 'maximal-role-old']
+        ) {
+            return FakeRole::maximal();
+        }
         if ($criteria === ['username' => 'role'] || $criteria === ['id' => 1]) {
             return FakeRole::defaultRole();
         }
@@ -42,6 +60,12 @@ class FakeRoleRepository extends FakeOlzRepository {
             || $criteria === ['old_username' => 'inexistent']
             || $criteria === ['username' => 'test']
             || $criteria === ['old_username' => 'test']
+            || $criteria === ['username' => 'minimal-user'] // the user, not the role
+            || $criteria === ['old_username' => 'minimal-user'] // the user, not the role
+            || $criteria === ['username' => 'empty-user'] // the user, not the role
+            || $criteria === ['old_username' => 'empty-user'] // the user, not the role
+            || $criteria === ['username' => 'maximal-user'] // the user, not the role
+            || $criteria === ['old_username' => 'maximal-user'] // the user, not the role
             || $criteria === ['username' => 'admin'] // the user, not the role
             || $criteria === ['username' => 'vorstand'] // the user, not the role
         ) {
